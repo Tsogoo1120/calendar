@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Хамтын Календар - Марлаа ба Цогоо</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #fdfcfa;
+            --bg-secondary: #f7f5f2;
+            --bg-card: #ffffff;
+            --border-color: #e8e4dd;
+            --text-primary: #2d2820;
+            --text-secondary: #6b6356;
+            --accent-marlaa: #d97757;
+            --accent-tsogoo: #5b8c9f;
+            --accent-shared: #8b6f47;
+            --shadow: 0 1px 3px rgba(45, 40, 32, 0.05);
+            --shadow-hover: 0 4px 12px rgba(45, 40, 32, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            margin-bottom: 3rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            animation: slideUp 0.7s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+        }
+
+        .schedule-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .day-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .day-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .day-header {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--bg-secondary);
+        }
+
+        .event {
+            padding: 0.75rem 0;
+            border-left: 3px solid var(--accent-shared);
+            padding-left: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-time {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .event-title {
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .event-details {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            padding-left: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .person-section {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .person-section.marlaa {
+            border-top: 4px solid var(--accent-marlaa);
+        }
+
+        .person-section.tsogoo {
+            border-top: 4px solid var(--accent-tsogoo);
+        }
+
+        .person-name {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .person-name.marlaa {
+            color: var(--accent-marlaa);
+        }
+
+        .person-name.tsogoo {
+            color: var(--accent-tsogoo);
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .task-item:hover {
+            background: var(--bg-primary);
+            transform: translateX(4px);
+        }
+
+        .deadline-badge {
+            display: inline-block;
+            background: var(--accent-shared);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .shared-section {
+            background: linear-gradient(135deg, #f7f5f2 0%, #ffffff 100%);
+            border: 2px solid var(--accent-shared);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .shared-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-shared);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .project-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .project-details {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        .project-details li {
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .badge.urgent {
+            background: #fef3f2;
+            color: #b42318;
+            border: 1px solid #fecdca;
+        }
+
+        .badge.deadline {
+            background: #fffaeb;
+            color: #b54708;
+            border: 1px solid #fedf89;
+        }
+
+        @media (max-width: 968px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Хамтын Ажлын Календар</h1>
+            <p class="subtitle">Марлаа ба Цогоо — 04/16 - 04/30, 2026</p>
+        </div>
+
+        <!-- Main Schedule Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📆</span>
+                Долоо хоногийн хуваарь (04/16 - 04/25)
+            </h2>
+            
+            <div class="schedule-grid">
+                <div class="day-card">
+                    <div class="day-header">4/16 — Мягмар</div>
+                    <div class="event">
+                        <div class="event-time">10:00</div>
+                        <div class="event-title">Batsukh Baagii</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">11:30</div>
+                        <div class="event-title">Bolovsrol TV</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">14:00 — 17:00</div>
+                        <div class="event-title">Хос биет</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">18:00</div>
+                        <div class="event-title">Кино нээлт</div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">4/17 — Лхагва</div>
+                    <div class="event">
+                        <div class="event-time">09:00 — 12:00</div>
+                        <div class="event-title">Хос биет</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">13:00</div>
+                        <div class="event-title">Batuka (4/1 хувь)</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">14:30</div>
+                        <div class="event-title">Ariuka</div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">4/18 — Пүрэв</div>
+                    <div class="event">
+                        <div class="event-time">15:30 — 16:30</div>
+                        <div class="event-title">Болдсайхан</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">17:00 — 18:00</div>
+                        <div class="event-title">Анарсайхан</div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">4/20 — Баасан</div>
+                    <div class="event">
+                        <div class="event-time">10:00</div>
+                        <div class="event-title">Дошхайрхан (биет)</div>
+                    </div>
+                    <div class="event">
+                        <div class="event-time">11:30</div>
+                        <div class="event-title">Batu (4/4)</div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">4/21 — Бямба</div>
+                    <div class="event">
+                        <div class="event-time">16:00 — 18:00</div>
+                        <div class="event-title">Хэнтий аймаг (300 км)</div>
+                        <div class="event-details">
+                            • Сэдэв: Ажилтны болон нийгмийн сэтгэлзүй<br>
+                            • 2 цагийн лекц — 4,000,000₮ + бензин
+                        </div>
+                    </div>
+                </div>
+
+                <div class="day-card">
+                    <div class="day-header">4/22 — Ням</div>
+                    <div class="event">
+                        <div class="event-time">10:00 — 12:00</div>
+                        <div class="event-title">Өмнөговь, Даланзадгад</div>
+                        <div class="event-details">
+                            • 200 хүн / 500 км<br>
+                            • 2 цагийн лекц — 5,000,000₮
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Tasks Section -->
+        <h2 class="section-title">
+            <span class="section-icon">👤</span>
+            Хувийн даалгаврууд
+        </h2>
+
+        <div class="two-column">
+            <!-- Marlaa Section -->
+            <div class="person-section marlaa">
+                <div class="person-name marlaa">🌸 Марлаа</div>
+                <ul class="task-list">
+                    <li class="task-item">
+                        <div class="task-title">• 4 дугаарын хаалттай грүпп хичээл бэлтгэх</div>
+                    </li>
+                    <li class="task-item">
+                        <div class="task-title">• Оюукааас тест авч өгөх</div>
+                    </li>
+                    <li class="task-item">
+                        <div class="task-title">• Өөрийн сошиал сувагт Подкаст бичлэг постерууд хийх</div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tsogoo Section -->
+            <div class="person-section tsogoo">
+                <div class="person-name tsogoo">⚡ Цогоо</div>
+                
+                <div class="deadline-badge">📅 04-17: Эцсийн хугацаа</div>
+                <ul class="task-list">
+                    <li class="task-item">
+                        <div class="task-title">• Barter website хийж дуусгах эцсийн байдлаар</div>
+                    </li>
+                </ul>
+
+                <div class="deadline-badge">📅 04-20: Эцсийн хугацаа</div>
+                <ul class="task-list">
+                    <li class="task-item">
+                        <div class="task-title">• Марлаа website test хувилбар хөгжүүлж дуусгах</div>
+                    </li>
+                </ul>
+
+                <div class="deadline-badge">📅 04-30: Эцсийн хугацаа</div>
+                <ul class="task-list">
+                    <li class="task-item">
+                        <div class="task-title">• AI website хийж дуусгах</div>
+                    </li>
+                </ul>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                    <strong>🎯 Өдөр бүр:</strong> 4-5 цаг суух (вэбсайт хөгжүүлэлт)
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <strong>Подкаст даалгаврууд:</strong>
+                    <ul class="task-list" style="margin-top: 0.5rem;">
+                        <li class="task-item">• Подкаст дугааруудыг эдит хийх</li>
+                        <li class="task-item">• Reels & Poster бэлтгэх (4 подкаст = 8 reels)</li>
+                        <li class="task-item">• 5 Нийтлэл бэлтгэх</li>
+                        <li class="task-item">• Хаалттай грүпп шинээр organize хийх</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <strong>Байгууллагын сургалт:</strong>
+                    <ul class="task-list" style="margin-top: 0.5rem;">
+                        <li class="task-item">• Зураг бичлэг авч сошиал сувгуудад тавигдах</li>
+                        <li class="task-item">• Бичлэг хийж Reels edit хийх</li>
+                        <li class="task-item">• Вэбсайт тавигдах контент байрлуулах</li>
+                        <li class="task-item">• Маркетинг хийж бусад байгууллагуудад суртчилах</li>
+                        <li class="task-item">• Байгууллагууд луу явуулах материал вэбсайт бэлэн болгох</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shared Tasks Section -->
+        <div class="section">
+            <div class="shared-section">
+                <div class="shared-title">
+                    <span class="section-icon">🤝</span>
+                    Хамтдаа хийх даалгаврууд
+                </div>
+
+                <div class="project-card">
+                    <div class="project-title">
+                        <span class="badge deadline">📅 04/20</span>
+                        Podcast 4 дугаар бичих
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-title">🚗 Хөдөө орон нутгийн лекцүүд</div>
+                    <div class="project-details">
+                        <ul>
+                            <li>• Маршрут гаргах</li>
+                            <li>• Буудаллах буудал зохицуулах</li>
+                            <li>• Унаа болон жолоо барих хүн зохицуулах</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Project Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📱</span>
+                Гар утасны апп төсөл
+            </h2>
+            
+            <div class="project-card">
+                <div class="project-title">Апп зорилго</div>
+                <div class="project-details">
+                    Хэрэглэгч тухайн апп ашигласнаар тест өгч өөрт байх сэтгэл түгшил, хямрал, айдас, анхаарал дутмагшил зэргийг хянах автомат зөвөлгөө авах, шинэ соргог мэдээлэл унших боломж олгох. Өөрийн статус аа хянах зорилготой апп.
+                </div>
+            </div>
+
+            <div class="project-card">
+                <div class="project-title">💰 Бизнес загвар</div>
+                <div class="project-details">
+                    <ul>
+                        <li><strong>Ашиг олох загвар:</strong> Subscription model — $15/сар</li>
+                        <li><strong>Зорилт:</strong> 1 жилийн хугацаанд 12,000 тогтмол хэрэглэгч бүртгэх</li>
+                        <li><strong>Орлого:</strong> Podcast орлогоор дараах зардлыг барих
+                            <ul>
+                                <li>→ Support: 2 IT хөгжүүлэгч</li>
+                                <li>→ 1 маркетер</li>
+                                <li>→ Апп-д шаардагдах тогтмол зардал</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
