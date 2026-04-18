@@ -1,4 +1,5 @@
 import express from 'express'
+import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -233,6 +234,60 @@ app.post('/api/tasks/move', (req, res) => {
   }
   writeDb(db)
   res.json({ ok: true })
+})
+
+// ── AI Scheduler ─────────────────────────────────────────────────
+app.post('/api/schedule', async (req, res) => {
+  const { prompt, apiKey, currentEvents } = req.body
+  if (!apiKey) return res.status(400).json({ error: 'API key required' })
+  if (!prompt)  return res.status(400).json({ error: 'Prompt required' })
+
+  const today = new Date().toISOString().split('T')[0]
+
+  const systemPrompt = `You are a smart calendar scheduling assistant.
+Today's date: ${today}
+
+The user's existing calendar events:
+${JSON.stringify(currentEvents || {}, null, 2)}
+
+Given the user's request, create optimal calendar events that fit around existing ones.
+
+IMPORTANT: Return ONLY a valid JSON array — no markdown, no explanation, nothing else. Format:
+[
+  {
+    "date": "YYYY-MM-DD",
+    "time": "HH:MM — HH:MM",
+    "title": "Clear event title",
+    "details": "Optional details, or empty string"
+  }
+]
+
+Rules:
+- Avoid conflicts with existing events
+- Use reasonable hours (09:00 — 21:00) unless the user specifies otherwise
+- Respect any deadlines mentioned
+- For long tasks, split into multiple focused sessions if needed
+- Keep titles short and clear`
+
+  try {
+    const client = new Anthropic({ apiKey })
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = message.content[0].text.trim()
+    const match = text.match(/\[[\s\S]*\]/)
+    if (!match) return res.status(500).json({ error: 'Could not parse AI response as JSON' })
+
+    const events = JSON.parse(match[0])
+    res.json({ events })
+  } catch (e) {
+    console.error('Anthropic error:', e.message)
+    res.status(500).json({ error: e.message })
+  }
 })
 
 // ── Start ────────────────────────────────────────────────────────

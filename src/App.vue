@@ -43,6 +43,78 @@
         </div>
       </header>
 
+      <!-- AI SCHEDULER -->
+      <section class="mb-8">
+        <div class="border-2 rounded-2xl shadow-sm transition-all"
+          :class="aiPanel ? 'bg-gradient-to-br from-violet-50 to-white border-violet-200' : 'bg-white border-warm-200'">
+          <div class="flex items-center gap-3 px-6 py-4 cursor-pointer select-none" @click="aiPanel = !aiPanel">
+            <span class="text-2xl">✨</span>
+            <h2 class="font-serif text-2xl font-bold text-violet-700">AI Автомат Хуваарь</h2>
+            <span class="text-xs text-violet-400 bg-violet-100 px-2 py-0.5 rounded-full">Claude</span>
+            <span class="ml-auto text-warm-400 text-sm">{{ aiPanel ? '▲' : '▼' }}</span>
+          </div>
+
+          <div v-if="aiPanel" class="px-6 pb-6 space-y-4">
+            <!-- API key -->
+            <div>
+              <label class="text-xs font-semibold text-warm-600 uppercase tracking-wide mb-1 block">Anthropic API Key</label>
+              <input v-model="aiApiKey" type="password" placeholder="sk-ant-..."
+                @input="saveApiKey"
+                class="w-full border border-warm-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200" />
+            </div>
+
+            <!-- Prompt -->
+            <div>
+              <label class="text-xs font-semibold text-warm-600 uppercase tracking-wide mb-1 block">Даалгавраа бичнэ үү</label>
+              <textarea v-model="aiPrompt"
+                placeholder="жнь: 4-р сарын 22-ны лекцийн бэлтгэлд 2 цаг хэрэгтэй, өдрийн цагаар. Мөн подкаст засварлах 1.5 цагийг энэ долоо хоногт хийх..."
+                class="w-full border border-warm-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200 resize-none" rows="3"
+                @keydown.ctrl.enter="scheduleWithAI"></textarea>
+              <div class="text-xs text-warm-400 mt-1">Ctrl+Enter дарж илгээх</div>
+            </div>
+
+            <button @click="scheduleWithAI"
+              :disabled="aiLoading || !aiPrompt.trim() || !aiApiKey.trim()"
+              class="text-sm bg-violet-600 text-white px-6 py-2.5 rounded-xl hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2">
+              <span v-if="aiLoading" class="animate-pulse">⏳ Боловсруулж байна...</span>
+              <span v-else>✨ Автоматаар хуваарилах</span>
+            </button>
+
+            <!-- Error -->
+            <div v-if="aiError" class="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              ⚠️ {{ aiError }}
+            </div>
+
+            <!-- Proposed events preview -->
+            <div v-if="aiProposed.length > 0" class="mt-2">
+              <div class="font-semibold text-sm text-warm-700 mb-3">📋 Санал болгох хуваарь — шалгаад нэмнэ үү:</div>
+              <div class="space-y-2 mb-4">
+                <div v-for="(evt, i) in aiProposed" :key="i"
+                  class="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 flex items-start justify-between group">
+                  <div>
+                    <div class="text-xs font-semibold text-violet-600 mb-0.5">{{ evt.date }} &nbsp;{{ evt.time }}</div>
+                    <div class="text-sm font-medium text-warm-800">{{ evt.title }}</div>
+                    <div v-if="evt.details" class="text-xs text-warm-500 mt-0.5">{{ evt.details }}</div>
+                  </div>
+                  <button @click="aiProposed.splice(i, 1)"
+                    class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 text-xl leading-none ml-4 transition-all">×</button>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <button @click="applyProposed"
+                  class="text-sm bg-violet-600 text-white px-5 py-2 rounded-xl hover:bg-violet-700 transition-all">
+                  ✅ Календарт нэмэх
+                </button>
+                <button @click="aiProposed = []"
+                  class="text-sm border border-warm-200 text-warm-600 px-5 py-2 rounded-xl hover:bg-warm-50 transition-all">
+                  Цуцлах
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- WEEKLY SCHEDULE -->
       <section class="mb-12">
         <div class="flex items-center gap-3 mb-6">
@@ -626,5 +698,52 @@ async function toggleSharedTask(task, done) {
 async function removeSharedTask(taskId, ti) {
   tasks.shared.splice(ti, 1)
   await api('DELETE', `/tasks/shared/${taskId}`)
+}
+
+// ── AI Scheduler ──────────────────────────────────────────────────
+const aiPanel    = ref(false)
+const aiPrompt   = ref('')
+const aiApiKey   = ref(localStorage.getItem('calendarAiKey') || '')
+const aiLoading  = ref(false)
+const aiProposed = ref([])
+const aiError    = ref('')
+
+function saveApiKey() {
+  localStorage.setItem('calendarAiKey', aiApiKey.value)
+}
+
+async function scheduleWithAI() {
+  if (!aiPrompt.value.trim() || !aiApiKey.value.trim()) return
+  aiLoading.value  = true
+  aiProposed.value = []
+  aiError.value    = ''
+  try {
+    const result = await api('POST', '/schedule', {
+      prompt:        aiPrompt.value,
+      apiKey:        aiApiKey.value,
+      currentEvents: eventsByDate,
+    })
+    if (result.error) throw new Error(result.error)
+    aiProposed.value = result.events || []
+  } catch (e) {
+    aiError.value = e.message || 'Алдаа гарлаа. API key шалгана уу.'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+async function applyProposed() {
+  for (const evt of aiProposed.value) {
+    const event = {
+      id:      crypto.randomUUID(),
+      time:    evt.time    || '',
+      title:   evt.title   || '',
+      details: evt.details || '',
+    }
+    eventsForDay(evt.date).push(event)
+    await api('POST', `/events/${evt.date}`, event)
+  }
+  aiProposed.value = []
+  aiPrompt.value   = ''
 }
 </script>
