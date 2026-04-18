@@ -2,3 +2,4 @@ node_modules/
 dist/
 data/db.json
 node_modules
+.claude/

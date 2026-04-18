@@ -1,5 +1,7 @@
 import express from 'express'
 import Anthropic from '@anthropic-ai/sdk'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -7,6 +9,16 @@ import { dirname, join } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR  = join(__dirname, 'data')
 const DATA_PATH = join(DATA_DIR, 'db.json')
+
+// ── Express & Socket setup ───────────────────────────────────────
+const app        = express()
+const httpServer = createServer(app)
+const io         = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE']
+  }
+})
 
 // ── Seed data (mirrors the original hardcoded state) ──────────────
 const SEED = {
@@ -86,13 +98,16 @@ function readDb() {
 
 function writeDb(data) {
   writeFileSync(DATA_PATH, JSON.stringify(data, null, 2))
+  io.emit('sync', data)   // broadcast to all connected clients
 }
 
-// ── Express setup ────────────────────────────────────────────────
-const app = express()
+io.on('connection', socket => {
+  socket.emit('sync', readDb())   // send current state to new client
+})
+
 app.use(express.json())
 
-// Allow cross-origin (useful if served on different ports in production)
+// Allow cross-origin
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS')
@@ -107,7 +122,6 @@ app.get('/api/state', (req, res) => {
 })
 
 // ── Events ───────────────────────────────────────────────────────
-// NOTE: /api/events/move must be registered BEFORE /api/events/:date
 app.post('/api/events/move', (req, res) => {
   const { fromDate, toDate, eventId } = req.body
   const db = readDb()
@@ -125,7 +139,7 @@ app.post('/api/events/move', (req, res) => {
 app.post('/api/events/:date', (req, res) => {
   const db = readDb()
   if (!db.events[req.params.date]) db.events[req.params.date] = []
-  const event = req.body   // id already set by client (UUID)
+  const event = req.body
   db.events[req.params.date].push(event)
   writeDb(db)
   res.status(201).json(event)
@@ -272,7 +286,7 @@ Rules:
   try {
     const client = new Anthropic({ apiKey })
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-3-5-sonnet-20240620',
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: 'user', content: prompt }],
@@ -292,4 +306,4 @@ Rules:
 
 // ── Start ────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => console.log(`API server → http://localhost:${PORT}`))
+httpServer.listen(PORT, () => console.log(`API server → http://localhost:${PORT}`))

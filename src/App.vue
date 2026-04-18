@@ -426,6 +426,10 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { io } from 'socket.io-client'
+
+// ── Socket initialization ─────────────────────────────────────────
+const socket = io()
 
 // ── API helper ────────────────────────────────────────────────────
 async function api(method, path, body) {
@@ -509,18 +513,29 @@ const weekStart = ref(getMonday(today))
 const eventsByDate = reactive({})
 const tasks = reactive({ marlaa: [], tsogooGroups: [], shared: [] })
 
+function syncState(data) {
+  Object.keys(eventsByDate).forEach(k => delete eventsByDate[k])
+  Object.assign(eventsByDate, data.events || {})
+  tasks.marlaa       = data.tasks?.marlaa       || []
+  tasks.tsogooGroups = data.tasks?.tsogooGroups || []
+  tasks.shared       = data.tasks?.shared       || []
+}
+
 onMounted(async () => {
+  // Initial fetch for immediate display
   try {
     const data = await api('GET', '/state')
-    Object.assign(eventsByDate, data.events || {})
-    tasks.marlaa       = data.tasks?.marlaa       || []
-    tasks.tsogooGroups = data.tasks?.tsogooGroups || []
-    tasks.shared       = data.tasks?.shared       || []
+    syncState(data)
   } catch (e) {
-    console.error('Failed to load data:', e)
+    console.error('Failed to load initial state:', e)
   } finally {
     loading.value = false
   }
+
+  // Listen for real-time updates from others
+  socket.on('sync', data => {
+    syncState(data)
+  })
 })
 
 // ── Week computed ─────────────────────────────────────────────────
