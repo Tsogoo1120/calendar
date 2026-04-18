@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'DM Sans', sans-serif;
+}
+
+.drag-over {
+  outline: 2px dashed #8b6f47;
+  background: #f7f5f2;
+}
+
+.dragging {
+  opacity: 0.4;
+}
+
+[v-cloak] {
+  display: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.slide-enter-active {
+  transition: all 0.25s ease;
+}
+
+.slide-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+}
